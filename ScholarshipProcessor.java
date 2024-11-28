@@ -5,18 +5,30 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ScholarshipProcessor {
-    public static void main(String[] args) {
-        String filePath = "C:/Users/marle/IdeaProjects/StudentScholarshipProcessor/src/studens.xlsx"; 
 
-        try (FileInputStream fis = new FileInputStream(new File(filePath))) {
+    public static void main(String[] args) {
+        String inputFilePath = "C:/Users/marle/IdeaProjects/StudentScholarshipProcessor/src/studens.xlsx";
+        String outputFilePath = "C:/Users/marle/IdeaProjects/StudentScholarshipProcessor/src/updated_studens.xlsx";
+
+        try (FileInputStream fis = new FileInputStream(new File(inputFilePath))) {
             Workbook workbook = new XSSFWorkbook(fis);
             Sheet sheet = workbook.getSheetAt(0);
 
-            boolean isFirstRow = true;
+            Sheet updatedSheet = workbook.createSheet("Updated Students");
 
+            Row headerRow = updatedSheet.createRow(0);
+            Row originalHeaderRow = sheet.getRow(0);
+            for (int i = 0; i < originalHeaderRow.getPhysicalNumberOfCells(); i++) {
+                headerRow.createCell(i).setCellValue(originalHeaderRow.getCell(i).getStringCellValue());
+            }
+            headerRow.createCell(originalHeaderRow.getPhysicalNumberOfCells()).setCellValue("Scholarship");
+
+            boolean isFirstRow = true;
+            int rowNum = 1;
             for (Row row : sheet) {
                 if (isFirstRow) {
                     isFirstRow = false;
@@ -35,13 +47,20 @@ public class ScholarshipProcessor {
                 String firstName = firstNameCell.getStringCellValue();
                 double grade = gradeCell.getNumericCellValue();
 
-                if (grade >= 70) {
-                    System.out.println(firstName + " " + lastName + " Stepa bar)");
-                } else {
-                    System.out.println(firstName + " " + lastName + " Stepa zhok(");
-                }
+                String scholarship = grade >= 70 ? "Stepa bar)" : "Stepa zhok(";
+
+                Row updatedRow = updatedSheet.createRow(rowNum++);
+                updatedRow.createCell(0).setCellValue(lastName);
+                updatedRow.createCell(1).setCellValue(firstName);
+                updatedRow.createCell(2).setCellValue(grade);
+                updatedRow.createCell(3).setCellValue(scholarship);
             }
+            try (FileOutputStream fos = new FileOutputStream(new File(outputFilePath))) {
+                workbook.write(fos);
+            }
+
             workbook.close();
+            System.out.println("Новый файл с обновленными данными был создан: " + outputFilePath);
 
         } catch (IOException e) {
             e.printStackTrace();
